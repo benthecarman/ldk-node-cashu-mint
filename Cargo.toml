@@ -16,6 +16,6 @@ serde_json= "1.0"
 pretty_env_logger = "0.5.0"
 dotenv = "0.15.0"
 nostr = "0.28.1"
-nostr-sdk = "0.28.0"
+nostr-sdk = { git = "https://github.com/rust-nostr/nostr", rev = "be7841dbaed41675b0bb024c41fca1e2c6f82ccf" }
 clap = { version = "4.5.2", features = ["derive"] }
 log = "0.4.21"

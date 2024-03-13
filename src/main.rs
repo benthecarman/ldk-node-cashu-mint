@@ -24,5 +24,9 @@ async fn main() -> anyhow::Result<()> {
     let listening_addr = format!("{}:{}", config.bind, config.port);
     info!("Listening on {}", listening_addr);
 
+    println!("Hello, welcome to Nostr world!");
+    let _ = nostr::nostr_listener().await;
+    println!("Bye!");
+
     Ok(())
 }
