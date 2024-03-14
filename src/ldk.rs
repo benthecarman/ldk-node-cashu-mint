@@ -1,20 +1,22 @@
 use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use bitcoin::hashes::Hash;
-use ldk_node::bitcoin::Network;
 use ldk_node::lightning::ln::channelmanager::PaymentId;
 use ldk_node::payment::PaymentStatus;
-use ldk_node::{default_config, Builder, Node};
+use ldk_node::Node;
 use lightning_invoice_26::Bolt11Invoice;
 use mokshamint::error::MokshaMintError;
 use mokshamint::lightning::error::LightningError;
 use mokshamint::lightning::Lightning;
 use mokshamint::model::{CreateInvoiceResult, PayInvoiceResult};
+use tokio::time::sleep;
 
-struct LdkBackend {
-    node: Node,
+#[derive(Clone)]
+pub struct LdkBackend {
+    pub node: Arc<Node>,
 }
 
 #[async_trait]
@@ -57,7 +59,7 @@ impl Lightning for LdkBackend {
     ) -> Result<PayInvoiceResult, MokshaMintError> {
         let invoice =
             ldk_node::lightning_invoice::Bolt11Invoice::from_str(&payment_request).unwrap();
-        let payment_result = self.node.bolt11_payment().send(&invoice).map_err(|_| {
+        let payment_id = self.node.bolt11_payment().send(&invoice).map_err(|_| {
             MokshaMintError::PayInvoice(
                 "Failed to pay invoice".to_string(),
                 LightningError::PaymentFailed,
@@ -65,9 +67,32 @@ impl Lightning for LdkBackend {
         })?;
 
         // todo do we need wait for payment success?
+        loop {
+            sleep(Duration::from_millis(100)).await;
+            match self.node.payment(&payment_id) {
+                Some(payment) => match payment.status {
+                    PaymentStatus::Succeeded => {
+                        break;
+                    }
+                    PaymentStatus::Pending => {}
+                    PaymentStatus::Failed => {
+                        return Err(MokshaMintError::PayInvoice(
+                            "Failed to pay invoice".to_string(),
+                            LightningError::PaymentFailed,
+                        ));
+                    }
+                },
+                None => {
+                    return Err(MokshaMintError::PayInvoice(
+                        "Failed to pay invoice".to_string(),
+                        LightningError::PaymentFailed,
+                    ));
+                }
+            }
+        }
 
         let invoice_result = PayInvoiceResult {
-            payment_hash: payment_result.to_string(),
+            payment_hash: invoice.payment_hash().to_string(),
             total_fees: 1,
         };
 
@@ -78,39 +103,7 @@ impl Lightning for LdkBackend {
         &self,
         payment_request: String,
     ) -> Result<Bolt11Invoice, MokshaMintError> {
-        Ok(Bolt11Invoice::from_str(&payment_request).map_err(|e| {
-            MokshaMintError::DecodeInvoice(payment_request, e)
-        })?)
+        Ok(Bolt11Invoice::from_str(&payment_request)
+            .map_err(|e| MokshaMintError::DecodeInvoice(payment_request, e))?)
     }
-}
-
-pub fn start_node() {
-    let mut config = default_config();
-    config.network = Network::Signet;
-
-    let mut builder = Builder::from_config(config);
-    builder.set_esplora_server("https://mutinynet.com/api/".to_string());
-
-    let node = Arc::new(builder.build().unwrap());
-    node.start().unwrap();
-
-    let event_node = Arc::clone(&node);
-    std::thread::spawn(move || loop {
-        let event = event_node.wait_next_event();
-    });
-
-    // get address
-    // send on-chain funds to address (get from mutinynet)
-
-    // open channel (get node from mutinynet faucet)
-
-    // send payment
-
-    println!("Node ID: {}", node.node_id());
-    println!("Address: {}", node.onchain_payment().new_address().unwrap());
-
-    println!("Channels: {:?}", node.list_channels());
-    println!("Node ID: {:?}", node.list_payments());
-
-    node.stop().unwrap();
 }
