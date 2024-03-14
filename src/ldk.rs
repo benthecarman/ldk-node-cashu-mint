@@ -39,11 +39,26 @@ impl Lightning for LdkBackend {
     }
 
     async fn create_invoice(&self, amount: u64) -> Result<CreateInvoiceResult, MokshaMintError> {
-        let invoice = self
+        // if we don't have enough funds, get a JIT channel
+        let invoice = if self
             .node
-            .bolt11_payment()
-            .receive(amount * 1000, "bla bla", 86_400)
-            .map_err(|_| MokshaMintError::InvoiceNotPaidYet)?;
+            .list_channels()
+            .iter()
+            .filter(|c| c.is_channel_ready)
+            .map(|c| c.inbound_capacity_msat)
+            .sum::<u64>()
+            < amount * 1000
+        {
+            self.node
+                .bolt11_payment()
+                .receive_via_jit_channel(amount * 1000, "bla bla", 86_400, None)
+                .map_err(|_| MokshaMintError::InvoiceNotPaidYet)?
+        } else {
+            self.node
+                .bolt11_payment()
+                .receive(amount * 1000, "bla bla", 86_400)
+                .map_err(|_| MokshaMintError::InvoiceNotPaidYet)?
+        };
 
         let result = CreateInvoiceResult {
             payment_hash: invoice.payment_hash().to_byte_array().to_vec(),
