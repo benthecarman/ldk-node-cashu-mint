@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::ldk::LdkBackend;
 use axum::extract::Query;
-use axum::http::StatusCode;
+use axum::http::{Method, StatusCode};
 use axum::routing::get;
 use axum::{Extension, Router};
 use bitcoin::secp256k1::PublicKey;
@@ -10,15 +10,17 @@ use ldk_node::lightning::ln::msgs::SocketAddress;
 use ldk_node::lightning::util::logger::Level;
 use mokshamint::config::{DatabaseConfig, LightningFeeConfig};
 use mokshamint::lightning::Lightning;
-use mokshamint::mint::MintBuilder;
+use mokshamint::mint::{Mint, MintBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::time::sleep;
 
 use axum::Json;
+use mokshamint::database::Database;
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use tower_http::cors::{AllowHeaders, Any, CorsLayer};
 
 mod cashu;
 mod config;
@@ -99,9 +101,10 @@ async fn main() -> anyhow::Result<()> {
         .build(Some(ldk_backend.clone()))
         .await?;
 
+    let server_mint = mint.clone();
     tokio::spawn(async move {
         loop {
-            if let Err(e) = mokshamint::server::run_server(mint.clone()).await {
+            if let Err(e) = mokshamint::server::run_server(server_mint.clone()).await {
                 eprintln!("Error running mint: {}", e);
             }
         }
@@ -109,13 +112,21 @@ async fn main() -> anyhow::Result<()> {
 
     let state = State {
         ldk: ldk_backend.clone(),
+        mint,
     };
     tokio::spawn(async move {
         loop {
             let ln_router = Router::new()
                 .route("/invoice", get(get_invoice))
                 .route("/channels", get(list_channels))
-                .layer(Extension(state.clone()));
+                .route("/activity", get(list_activity))
+                .layer(Extension(state.clone()))
+                .layer(
+                    CorsLayer::new()
+                        .allow_origin(Any)
+                        .allow_headers(AllowHeaders::any())
+                        .allow_methods([Method::GET, Method::POST]),
+                );
             let listener = tokio::net::TcpListener::bind(listening_addr.clone())
                 .await
                 .unwrap();
@@ -137,6 +148,7 @@ async fn main() -> anyhow::Result<()> {
 #[derive(Clone)]
 pub struct State {
     pub ldk: Arc<LdkBackend>,
+    pub mint: Mint,
 }
 
 pub async fn get_invoice(
@@ -179,4 +191,22 @@ pub async fn list_channels(
         .collect();
 
     Ok(Json(json!(channels)))
+}
+
+pub async fn list_activity(
+    Extension(state): Extension<State>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let mut tx = state.mint.db.begin_tx().await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"error": e.to_string()})),
+        )
+    })?;
+    let proofs = state.mint.db.get_used_proofs(&mut tx).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"error": e.to_string()})),
+        )
+    })?;
+    Ok(Json(json!(proofs.proofs())))
 }

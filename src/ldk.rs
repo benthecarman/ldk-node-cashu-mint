@@ -65,6 +65,8 @@ impl Lightning for LdkBackend {
             payment_request: invoice.to_string(),
         };
 
+        println!("Created invoice: {:?}", result);
+
         Ok(result)
     }
 
@@ -110,6 +112,8 @@ impl Lightning for LdkBackend {
             payment_hash: invoice.payment_hash().to_string(),
             total_fees: 1,
         };
+
+        println!("Payed invoice: {:?}", invoice_result);
 
         Ok(invoice_result)
     }
