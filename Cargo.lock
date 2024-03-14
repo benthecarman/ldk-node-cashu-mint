@@ -1629,7 +1629,7 @@ dependencies = [
 [[package]]
 name = "ldk-node"
 version = "0.3.0-alpha"
-source = "git+https://github.com/benthecarman/ldk-node?branch=2024-01-0.3-pre-alpha#258524c46253ce164d539fd6af36303b5398d692"
+source = "git+https://github.com/benthecarman/ldk-node?branch=2024-01-0.3-pre-alpha#c47fd258cbf75b4bdbfa9054ee67b7b831b80919"
 dependencies = [
  "bdk",
  "bip39",
@@ -1941,7 +1941,7 @@ dependencies = [
 [[package]]
 name = "moksha-core"
 version = "0.2.1"
-source = "git+https://github.com/elnosh/moksha?branch=master#604294188bb56ae2c94170be46704ac607bc3247"
+source = "git+https://github.com/elnosh/moksha?branch=master#7c04d79e7f7492fadf834dae131b9127e8c07297"
 dependencies = [
  "anyhow",
  "base64 0.21.7",
@@ -1963,7 +1963,7 @@ dependencies = [
 [[package]]
 name = "moksha-mint"
 version = "0.2.1"
-source = "git+https://github.com/elnosh/moksha?branch=master#604294188bb56ae2c94170be46704ac607bc3247"
+source = "git+https://github.com/elnosh/moksha?branch=master#7c04d79e7f7492fadf834dae131b9127e8c07297"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3923,9 +3923,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-stream"
-version = "0.1.14"
+version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "397c988d37662c7dda6d2208364a706264bf3d6138b11d436cbac0ad38832842"
+checksum = "267ac89e0bec6e691e5813911606935d77c476ff49024f98abcea3e7b15e37af"
 dependencies = [
  "futures-core",
  "pin-project-lite",

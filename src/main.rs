@@ -20,6 +20,7 @@ use axum::Json;
 use mokshamint::database::Database;
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use moksha_core::primitives::MintInfoResponse;
 use tower_http::cors::{AllowHeaders, Any, CorsLayer};
 
 mod cashu;
@@ -117,6 +118,8 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         loop {
             let ln_router = Router::new()
+                .route("/info", get(get_info))
+                .route("/v1/info", get(get_info))
                 .route("/invoice", get(get_invoice))
                 .route("/channels", get(list_channels))
                 .route("/activity", get(list_activity))
@@ -209,4 +212,11 @@ pub async fn list_activity(
         )
     })?;
     Ok(Json(json!(proofs.proofs())))
+}
+
+pub async fn get_info(
+    Extension(state): Extension<State>,
+) -> Result<Json<MintInfoResponse>, (StatusCode, Json<Value>)> {
+    let res = mokshamint::routes::default::get_info(axum::extract::State(state.mint.clone())).await.unwrap();
+    Ok(res)
 }
