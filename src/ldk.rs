@@ -1,13 +1,15 @@
-use core::error;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use anyhow::Ok;
-use bitcoin::{amount, Amount};
+use async_trait::async_trait;
+use bitcoin::hashes::Hash;
 use ldk_node::bitcoin::Network;
-use ldk_node::lightning_invoice::Bolt11Invoice;
+use ldk_node::lightning::ln::channelmanager::PaymentId;
 use ldk_node::payment::PaymentStatus;
 use ldk_node::{default_config, Builder, Node};
+use lightning_invoice_26::Bolt11Invoice;
+use mokshamint::error::MokshaMintError;
+use mokshamint::lightning::error::LightningError;
 use mokshamint::lightning::Lightning;
 use mokshamint::model::{CreateInvoiceResult, PayInvoiceResult};
 
@@ -15,28 +17,34 @@ struct LdkBackend {
     node: Node,
 }
 
+#[async_trait]
 impl Lightning for LdkBackend {
-    async fn is_invoice_paid(&self, invoice: String) -> Result<bool, Box<dyn error::Error>> {
-        let invoice = self.decode_invoice(invoice).await?;
-        let payment_details = self.node.payment(invoice.payment_hash()).unwrap();
-        match payment_details.status {
-            PaymentStatus::Succeeded => Ok(true),
-            PaymentStatus::Pending => Ok(false),
-            PaymentStatus::Failed => Ok(false),
+    async fn is_invoice_paid(&self, invoice: String) -> Result<bool, MokshaMintError> {
+        let invoice: Bolt11Invoice = self.decode_invoice(invoice).await?;
+        let id_bytes: [u8; 32] = invoice
+            .payment_hash()
+            .to_vec()
+            .try_into()
+            .expect("always 32 bytes");
+        let id = PaymentId(id_bytes);
+        let payment_details = self.node.payment(&id);
+        match payment_details.map(|p| p.status) {
+            Some(PaymentStatus::Succeeded) => Ok(true),
+            Some(PaymentStatus::Pending) => Ok(false),
+            Some(PaymentStatus::Failed) => Ok(false),
+            None => Ok(false),
         }
     }
 
-    async fn create_invoice(
-        &self,
-        amount: u64,
-    ) -> Result<CreateInvoiceResult, Box<dyn error::Error>> {
+    async fn create_invoice(&self, amount: u64) -> Result<CreateInvoiceResult, MokshaMintError> {
         let invoice = self
             .node
             .bolt11_payment()
-            .receive(amount * 1000, "bla bla", expiry_secs)?;
+            .receive(amount * 1000, "bla bla", 86_400)
+            .map_err(|_| MokshaMintError::InvoiceNotPaidYet)?;
 
         let result = CreateInvoiceResult {
-            payment_hash: invoice.payment_hash(),
+            payment_hash: invoice.payment_hash().to_byte_array().to_vec(),
             payment_request: invoice.to_string(),
         };
 
@@ -46,9 +54,17 @@ impl Lightning for LdkBackend {
     async fn pay_invoice(
         &self,
         payment_request: String,
-    ) -> Result<PayInvoiceResult, Box<dyn error::Error>> {
-        let invoice = self.decode_invoice(payment_request).await?;
-        let payment_result = self.node.bolt11_payment().send(invoice)?;
+    ) -> Result<PayInvoiceResult, MokshaMintError> {
+        let invoice =
+            ldk_node::lightning_invoice::Bolt11Invoice::from_str(&payment_request).unwrap();
+        let payment_result = self.node.bolt11_payment().send(&invoice).map_err(|_| {
+            MokshaMintError::PayInvoice(
+                "Failed to pay invoice".to_string(),
+                LightningError::PaymentFailed,
+            )
+        })?;
+
+        // todo do we need wait for payment success?
 
         let invoice_result = PayInvoiceResult {
             payment_hash: payment_result.to_string(),
@@ -61,8 +77,10 @@ impl Lightning for LdkBackend {
     async fn decode_invoice(
         &self,
         payment_request: String,
-    ) -> Result<Bolt11Invoice, Box<dyn error::Error>> {
-        Bolt11Invoice::from_str(&payment_request)
+    ) -> Result<Bolt11Invoice, MokshaMintError> {
+        Ok(Bolt11Invoice::from_str(&payment_request).map_err(|e| {
+            MokshaMintError::DecodeInvoice(payment_request, e)
+        })?)
     }
 }
 

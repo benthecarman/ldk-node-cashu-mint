@@ -19,3 +19,6 @@ nostr = "0.28.1"
 nostr-sdk = { git = "https://github.com/rust-nostr/nostr", rev = "be7841dbaed41675b0bb024c41fca1e2c6f82ccf" }
 clap = { version = "4.5.2", features = ["derive"] }
 log = "0.4.21"
+async-trait = "0.1.74"
+
+lightning-invoice_26 = { package = "lightning-invoice", version = "0.26.0" }

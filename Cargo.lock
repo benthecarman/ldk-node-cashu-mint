@@ -1663,11 +1663,13 @@ name = "ldk-node-cashu-mint"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "axum 0.6.20",
  "bitcoin 0.30.2",
  "clap",
  "dotenv",
  "ldk-node",
+ "lightning-invoice 0.26.0",
  "log",
  "moksha-core",
  "moksha-mint",
