@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
         .with_private_key(private_key)
         .with_db(Some(db_config))
         .with_fee(Some(fees))
-        .build(Some(ldk_backend))
+        .build(Some(ldk_backend.clone()))
         .await?;
 
     tokio::spawn(async move {
@@ -108,9 +108,14 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    let state = State {
+        ldk: ldk_backend.clone(),
+    };
     tokio::spawn(async move {
         loop {
-            let ln_router = Router::new().route("/invoice", get(get_invoice));
+            let ln_router = Router::new()
+                .route("/invoice", get(get_invoice))
+                .layer(Extension(state.clone()));
             let listener = tokio::net::TcpListener::bind(listening_addr.clone())
                 .await
                 .unwrap();
@@ -124,7 +129,7 @@ async fn main() -> anyhow::Result<()> {
 
     sleep(std::time::Duration::from_secs(5)).await;
 
-    //ldk_backend.node.stop()?;
+    ldk_backend.node.stop()?;
 
     Ok(())
 }
