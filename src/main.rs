@@ -1,9 +1,12 @@
 use crate::config::Config;
 use crate::ldk::LdkBackend;
+use bitcoin::secp256k1::PublicKey;
 use clap::Parser;
+use ldk_node::lightning::ln::msgs::SocketAddress;
 use ldk_node::lightning::util::logger::Level;
 use mokshamint::config::{DatabaseConfig, LightningFeeConfig};
 use mokshamint::mint::MintBuilder;
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::time::sleep;
 
@@ -30,15 +33,23 @@ async fn main() -> anyhow::Result<()> {
 
     let data_dir = config.data_dir.clone();
 
+    let trusted_node = PublicKey::from_str(&config.trusted_node)?;
+
     let node_cfg = ldk_node::Config {
         network: config.network(),
         storage_dir_path: data_dir,
         log_level: Level::Trace,
+        trusted_peers_0conf: vec![trusted_node],
         ..Default::default()
     };
 
     let mut builder = ldk_node::Builder::from_config(node_cfg);
     builder.set_esplora_server(config.esplora_url());
+    builder.set_liquidity_source_lsps2(
+        SocketAddress::from_str(&config.trusted_socket_addr).expect("Invalid socket address"),
+        trusted_node,
+        Some(config.lsps_token),
+    );
 
     let node = Arc::new(builder.build()?);
 

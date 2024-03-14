@@ -15,6 +15,15 @@ pub struct Config {
 	/// Relay to connect to, can be specified multiple times
 	#[clap(short, long)]
 	pub relay: Vec<String>,
+	/// Node we trust a 0 conf channel from, their pubkey
+	#[clap(long)]
+	pub trusted_node: String,
+	/// Node we trust a 0 conf channel from, their connection string
+	#[clap(long)]
+	pub trusted_socket_addr: String,
+	/// Token for LSPS
+	#[clap(long)]
+	pub lsps_token: String,
 	/// Bind address for webserver
 	#[clap(default_value = "0.0.0.0", long)]
 	pub bind: String,
