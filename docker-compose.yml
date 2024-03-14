@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  postgres:
+    container_name: "postgres"
+    image: 'postgres:15-alpine'
+    restart: always
+    stop_grace_period: 1m
+    volumes:
+      - ./data/volumes:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "ldk_cashu"
+
+  ldk_node:
+    container_name: "ldk_node"
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      RUST_LOG: "ldk_node_cashu_mint=debug,ldk_node=debug,lightning=debug"
+      FLAGS: '--data-dir /data --relay wss://relay.damus.io --pg-url postgres://postgres:postgres@postgres/ldk_cashu --trusted-node 0371d6fd7d75de2d0372d03ea00e8bacdacb50c27d0eaea0a76a0622eff1f5ef2b --trusted-socket-addr 44.219.111.31:3973 --lsps-token T2MF3ZU5'
+    restart: always
+    stop_grace_period: 1m
+    volumes:
+      - ./data:/data
+    ports:
+      - "3000:3000"
+      - "3338:3338"
