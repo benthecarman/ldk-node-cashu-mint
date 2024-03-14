@@ -11,6 +11,7 @@ use ldk_node::lightning::util::logger::Level;
 use mokshamint::config::{DatabaseConfig, LightningFeeConfig};
 use mokshamint::lightning::Lightning;
 use mokshamint::mint::MintBuilder;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::time::sleep;
@@ -147,4 +148,35 @@ pub async fn get_invoice(
         .unwrap();
     let invoice_result = state.ldk.create_invoice(amount_sats).await.unwrap();
     Ok(Json(json!(invoice_result)))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChannelInfo {
+    pub channel_id: String,
+    pub counterparty_node_id: PublicKey,
+    pub channel_value_sats: u64,
+    pub outbound_capacity_sat: u64,
+    pub inbound_capacity_sat: u64,
+    pub is_channel_ready: bool,
+}
+
+pub async fn list_channels(
+    Extension(state): Extension<State>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let channels_details = state.ldk.node.list_channels();
+
+    let channels: Vec<ChannelInfo> = channels_details
+        .iter()
+        .map(|channel| ChannelInfo {
+            channel_id: channel.channel_id.to_string(),
+            counterparty_node_id: channel.counterparty_node_id,
+            channel_value_sats: channel.channel_value_sats,
+            outbound_capacity_sat: channel.outbound_capacity_msat * 1000,
+            inbound_capacity_sat: channel.inbound_capacity_msat * 1000,
+            is_channel_ready: channel.is_channel_ready,
+        })
+        .collect();
+
+    let json = serde_json::to_string(&channels).unwrap();
+    Ok(Json(json!(json)))
 }
