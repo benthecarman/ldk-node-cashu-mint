@@ -1,9 +1,13 @@
-use std::sync::Arc;
 use crate::config::Config;
 use crate::ldk::LdkBackend;
 use clap::Parser;
 use ldk_node::lightning::util::logger::Level;
 use log::{debug, info};
+use mokshamint::{
+    config::{MintConfig, ServerConfig},
+    mint::{Mint, MintBuilder},
+};
+use std::sync::Arc;
 use tokio::time::sleep;
 
 mod cashu;
@@ -57,13 +61,40 @@ async fn main() -> anyhow::Result<()> {
 
     let ldk_backend = LdkBackend { node };
 
+    let MintConfig {
+        privatekey,
+        derivation_path,
+        info,
+        lightning_fee,
+        server,
+        btconchain_backend: _,
+        lightning_backend: _,
+        tracing,
+        database,
+    } = MintConfig::read_config_with_defaults();
+
+    let mint = MintBuilder::new()
+        .with_mint_info(Some(info))
+        .with_server(Some(server))
+        .with_private_key(privatekey)
+        .with_derivation_path(derivation_path)
+        .with_db(Some(database))
+        // .with_lightning(lightning_backend.expect("lightning not set"))
+        // .with_btc_onchain(btconchain_backend)
+        .with_fee(Some(lightning_fee))
+        .with_tracing(tracing)
+        .build(Some(Arc::new(ldk_backend)))
+        .await;
+
+    mokshamint::server::run_server(mint?).await?;
+
     println!("Hello, welcome to Nostr world!");
     let _ = nostr::nostr_listener().await;
     println!("Bye!");
 
     sleep(std::time::Duration::from_secs(5)).await;
 
-    ldk_backend.node.stop()?;
+    //ldk_backend.node.stop()?;
 
     Ok(())
 }
