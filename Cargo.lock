@@ -1944,7 +1944,7 @@ dependencies = [
 [[package]]
 name = "moksha-core"
 version = "0.2.1"
-source = "git+https://github.com/elnosh/moksha?branch=master#0f1e8e8584596115658cff3e568625f2e9d2ea2f"
+source = "git+https://github.com/elnosh/moksha?branch=master#604294188bb56ae2c94170be46704ac607bc3247"
 dependencies = [
  "anyhow",
  "base64 0.21.7",
@@ -1966,7 +1966,7 @@ dependencies = [
 [[package]]
 name = "moksha-mint"
 version = "0.2.1"
-source = "git+https://github.com/elnosh/moksha?branch=master#0f1e8e8584596115658cff3e568625f2e9d2ea2f"
+source = "git+https://github.com/elnosh/moksha?branch=master#604294188bb56ae2c94170be46704ac607bc3247"
 dependencies = [
  "anyhow",
  "async-trait",

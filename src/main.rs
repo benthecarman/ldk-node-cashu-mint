@@ -2,11 +2,8 @@ use crate::config::Config;
 use crate::ldk::LdkBackend;
 use clap::Parser;
 use ldk_node::lightning::util::logger::Level;
-use log::{debug, info};
-use mokshamint::{
-    config::{MintConfig, ServerConfig},
-    mint::{Mint, MintBuilder},
-};
+use mokshamint::config::{DatabaseConfig, LightningFeeConfig};
+use mokshamint::mint::MintBuilder;
 use std::sync::Arc;
 use tokio::time::sleep;
 
@@ -18,18 +15,18 @@ mod nostr;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
-    pretty_env_logger::try_init()?;
+    // pretty_env_logger::try_init()?;
 
     let config = Config::parse();
 
-    info!("Starting!");
-    info!("Data dir: {}", config.data_dir);
-    info!("Network: {}", config.network());
-    info!("Esplora: {}", config.esplora_url());
-    info!("Relays: {:?}", config.relay);
+    println!("Starting!");
+    println!("Data dir: {}", config.data_dir);
+    println!("Network: {}", config.network());
+    println!("Esplora: {}", config.esplora_url());
+    println!("Relays: {:?}", config.relay);
 
     let listening_addr = format!("{}:{}", config.bind, config.port);
-    info!("Listening on {}", listening_addr);
+    println!("Listening on {}", listening_addr);
 
     let data_dir = config.data_dir.clone();
 
@@ -47,46 +44,41 @@ async fn main() -> anyhow::Result<()> {
 
     node.start()?;
 
-    info!("Node started!");
-    info!("Node ID: {}", node.node_id());
+    println!("Node started!");
+    println!("Node ID: {}", node.node_id());
 
     let event_node = Arc::clone(&node);
     std::thread::spawn(move || loop {
         let event = event_node.wait_next_event();
-        info!("GOT NEW EVENT: {event:?}");
-        debug!("Channels: {:?}", event_node.list_channels());
-        debug!("Payments: {:?}", event_node.list_payments());
+        println!("GOT NEW EVENT: {event:?}");
+        println!("Channels: {:?}", event_node.list_channels());
+        println!("Payments: {:?}", event_node.list_payments());
         event_node.event_handled();
     });
 
-    let ldk_backend = LdkBackend { node };
+    let ldk_backend = Arc::new(LdkBackend { node });
 
-    let MintConfig {
-        privatekey,
-        derivation_path,
-        info,
-        lightning_fee,
-        server,
-        btconchain_backend: _,
-        lightning_backend: _,
-        tracing,
-        database,
-    } = MintConfig::read_config_with_defaults();
+    let db_config = DatabaseConfig {
+        db_url: config.pg_url,
+        max_connections: 10,
+    };
 
+    let fees = LightningFeeConfig {
+        fee_percent: 1.0,
+        fee_reserve_min: 4000,
+    };
+
+    let private_key = ldk_backend
+        .node
+        .sign_message(b"signing this message to create a private key")?;
     let mint = MintBuilder::new()
-        .with_mint_info(Some(info))
-        .with_server(Some(server))
-        .with_private_key(privatekey)
-        .with_derivation_path(derivation_path)
-        .with_db(Some(database))
-        // .with_lightning(lightning_backend.expect("lightning not set"))
-        // .with_btc_onchain(btconchain_backend)
-        .with_fee(Some(lightning_fee))
-        .with_tracing(tracing)
-        .build(Some(Arc::new(ldk_backend)))
-        .await;
+        .with_private_key(private_key)
+        .with_db(Some(db_config))
+        .with_fee(Some(fees))
+        .build(Some(ldk_backend))
+        .await?;
 
-    mokshamint::server::run_server(mint?).await?;
+    mokshamint::server::run_server(mint).await?;
 
     println!("Hello, welcome to Nostr world!");
     let _ = nostr::nostr_listener().await;
