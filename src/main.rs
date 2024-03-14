@@ -78,7 +78,13 @@ async fn main() -> anyhow::Result<()> {
         .build(Some(ldk_backend))
         .await?;
 
-    mokshamint::server::run_server(mint).await?;
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = mokshamint::server::run_server(mint.clone()).await {
+                eprintln!("Error running mint: {}", e);
+            }
+        }
+    });
 
     println!("Hello, welcome to Nostr world!");
     let _ = nostr::nostr_listener().await;
