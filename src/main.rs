@@ -1,14 +1,25 @@
 use crate::config::Config;
 use crate::ldk::LdkBackend;
+use axum::extract::{Path, Query};
+use axum::http::StatusCode;
+use axum::routing::get;
+use axum::{Extension, Router};
 use bitcoin::secp256k1::PublicKey;
 use clap::Parser;
 use ldk_node::lightning::ln::msgs::SocketAddress;
 use ldk_node::lightning::util::logger::Level;
 use mokshamint::config::{DatabaseConfig, LightningFeeConfig};
+use mokshamint::lightning::Lightning;
 use mokshamint::mint::MintBuilder;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::time::sleep;
+
+use anyhow::anyhow;
+use axum::Json;
+use bitcoin::hashes::{sha256, Hash};
+use serde_json::{json, Value};
+use std::collections::HashMap;
 
 mod cashu;
 mod config;
@@ -97,6 +108,16 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    tokio::spawn(async move {
+        loop {
+            let ln_router = Router::new().route("/invoice", get(get_invoice));
+            let listener = tokio::net::TcpListener::bind(listening_addr.clone())
+                .await
+                .unwrap();
+            axum::serve(listener, ln_router).await.unwrap();
+        }
+    });
+
     println!("Hello, welcome to Nostr world!");
     let _ = nostr::nostr_listener().await;
     println!("Bye!");
@@ -106,4 +127,21 @@ async fn main() -> anyhow::Result<()> {
     //ldk_backend.node.stop()?;
 
     Ok(())
+}
+
+#[derive(Clone)]
+pub struct State {
+    pub ldk: Arc<LdkBackend>,
+}
+
+pub async fn get_invoice(
+    Query(params): Query<HashMap<String, String>>,
+    Extension(state): Extension<State>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let (amount_sats) = params
+        .get("amount")
+        .and_then(|a| a.parse::<u64>().ok())
+        .unwrap();
+    let invoice_result = state.ldk.create_invoice(amount_sats).await.unwrap();
+    Ok(Json(json!(invoice_result)))
 }
