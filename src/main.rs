@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::ldk::LdkBackend;
-use axum::extract::{Path, Query};
+use axum::extract::Query;
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Extension, Router};
@@ -15,9 +15,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::time::sleep;
 
-use anyhow::anyhow;
 use axum::Json;
-use bitcoin::hashes::{sha256, Hash};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
@@ -143,7 +141,7 @@ pub async fn get_invoice(
     Query(params): Query<HashMap<String, String>>,
     Extension(state): Extension<State>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let (amount_sats) = params
+    let amount_sats = params
         .get("amount")
         .and_then(|a| a.parse::<u64>().ok())
         .unwrap();
