@@ -233,6 +233,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "atomic-destructor"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4653a42bf04120a1d4e92452e006b4e3af4ab4afff8fb4af0f1bbb98418adf3e"
+dependencies = [
+ "tracing",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1581,6 +1590,15 @@ dependencies = [
 
 [[package]]
 name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
@@ -1653,7 +1671,7 @@ dependencies = [
  "log",
  "moksha-core",
  "moksha-mint",
- "nostr",
+ "nostr 0.28.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "nostr-sdk",
  "pretty_env_logger",
  "serde",
@@ -1696,7 +1714,7 @@ dependencies = [
 [[package]]
 name = "lightning"
 version = "0.0.121"
-source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#35c408fca8c2e6e8d13d77a549b2c2041ce4041e"
+source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#8138bec3954e85da3e1b1b8b9593c5f9528e424d"
 dependencies = [
  "bitcoin 0.30.2",
  "hex-conservative",
@@ -1706,7 +1724,7 @@ dependencies = [
 [[package]]
 name = "lightning-background-processor"
 version = "0.0.121"
-source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#35c408fca8c2e6e8d13d77a549b2c2041ce4041e"
+source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#8138bec3954e85da3e1b1b8b9593c5f9528e424d"
 dependencies = [
  "bitcoin 0.30.2",
  "lightning 0.0.121",
@@ -1730,7 +1748,7 @@ dependencies = [
 [[package]]
 name = "lightning-invoice"
 version = "0.29.0"
-source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#35c408fca8c2e6e8d13d77a549b2c2041ce4041e"
+source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#8138bec3954e85da3e1b1b8b9593c5f9528e424d"
 dependencies = [
  "bech32",
  "bitcoin 0.30.2",
@@ -1756,7 +1774,7 @@ dependencies = [
 [[package]]
 name = "lightning-net-tokio"
 version = "0.0.121"
-source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#35c408fca8c2e6e8d13d77a549b2c2041ce4041e"
+source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#8138bec3954e85da3e1b1b8b9593c5f9528e424d"
 dependencies = [
  "bitcoin 0.30.2",
  "lightning 0.0.121",
@@ -1766,7 +1784,7 @@ dependencies = [
 [[package]]
 name = "lightning-persister"
 version = "0.0.121"
-source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#35c408fca8c2e6e8d13d77a549b2c2041ce4041e"
+source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#8138bec3954e85da3e1b1b8b9593c5f9528e424d"
 dependencies = [
  "bitcoin 0.30.2",
  "lightning 0.0.121",
@@ -1776,7 +1794,7 @@ dependencies = [
 [[package]]
 name = "lightning-rapid-gossip-sync"
 version = "0.0.121"
-source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#35c408fca8c2e6e8d13d77a549b2c2041ce4041e"
+source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#8138bec3954e85da3e1b1b8b9593c5f9528e424d"
 dependencies = [
  "bitcoin 0.30.2",
  "lightning 0.0.121",
@@ -1785,7 +1803,7 @@ dependencies = [
 [[package]]
 name = "lightning-transaction-sync"
 version = "0.0.121"
-source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#35c408fca8c2e6e8d13d77a549b2c2041ce4041e"
+source = "git+https://github.com/tnull/rust-lightning?branch=2024-03-invoice-generated-event#8138bec3954e85da3e1b1b8b9593c5f9528e424d"
 dependencies = [
  "bdk-macros",
  "bitcoin 0.30.2",
@@ -2061,14 +2079,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "nostr"
+version = "0.28.1"
+source = "git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf#be7841dbaed41675b0bb024c41fca1e2c6f82ccf"
+dependencies = [
+ "aes",
+ "base64 0.21.7",
+ "bip39",
+ "bitcoin 0.30.2",
+ "cbc",
+ "chacha20",
+ "chacha20poly1305",
+ "getrandom",
+ "instant",
+ "js-sys",
+ "negentropy",
+ "once_cell",
+ "reqwest",
+ "scrypt",
+ "serde",
+ "serde_json",
+ "tracing",
+ "unicode-normalization",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "nostr-database"
 version = "0.28.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "174b81445708157ecaa41f0439a2a0ce6df70f45ddc7a333c4a310347c09a990"
+source = "git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf#be7841dbaed41675b0bb024c41fca1e2c6f82ccf"
 dependencies = [
  "async-trait",
  "lru",
- "nostr",
+ "nostr 0.28.1 (git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf)",
  "thiserror",
  "tokio",
  "tracing",
@@ -2076,13 +2122,13 @@ dependencies = [
 
 [[package]]
 name = "nostr-relay-pool"
-version = "0.28.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1621a53bf1bde6fee89726be371931b96542d49e58a221f22c24ea02fb913c4e"
+version = "0.28.1"
+source = "git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf#be7841dbaed41675b0bb024c41fca1e2c6f82ccf"
 dependencies = [
  "async-utility",
  "async-wsocket",
- "nostr",
+ "atomic-destructor",
+ "nostr 0.28.1 (git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf)",
  "nostr-database",
  "thiserror",
  "tokio",
@@ -2092,12 +2138,11 @@ dependencies = [
 [[package]]
 name = "nostr-sdk"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "531fbbb39aef79311b60488f2d4aacc5f8156d76a5fb1bb110486746b3cfe873"
+source = "git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf#be7841dbaed41675b0bb024c41fca1e2c6f82ccf"
 dependencies = [
  "async-utility",
  "lnurl-pay",
- "nostr",
+ "nostr 0.28.1 (git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf)",
  "nostr-database",
  "nostr-relay-pool",
  "nostr-signer",
@@ -2111,11 +2156,10 @@ dependencies = [
 [[package]]
 name = "nostr-signer"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "305c33e0ddde9c4288af000cc3fee665190a4ebef4841ce5bcb3eb4a2f473e62"
+source = "git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf#be7841dbaed41675b0bb024c41fca1e2c6f82ccf"
 dependencies = [
  "async-utility",
- "nostr",
+ "nostr 0.28.1 (git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf)",
  "nostr-relay-pool",
  "thiserror",
  "tokio",
@@ -2124,11 +2168,10 @@ dependencies = [
 [[package]]
 name = "nostr-zapper"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "523d787e19fbca8ad6ae4edf42db266a89d24aa3bfb1ce558ab87f3c5d10e2d5"
+source = "git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf#be7841dbaed41675b0bb024c41fca1e2c6f82ccf"
 dependencies = [
  "async-trait",
- "nostr",
+ "nostr 0.28.1 (git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf)",
  "thiserror",
 ]
 
@@ -2208,11 +2251,10 @@ dependencies = [
 [[package]]
 name = "nwc"
 version = "0.28.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc11612a16af0252701ebd71d202e60343606e70a10bba875674dbddd36237e5"
+source = "git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf#be7841dbaed41675b0bb024c41fca1e2c6f82ccf"
 dependencies = [
  "async-utility",
- "nostr",
+ "nostr 0.28.1 (git+https://github.com/rust-nostr/nostr?rev=be7841dbaed41675b0bb024c41fca1e2c6f82ccf)",
  "nostr-relay-pool",
  "nostr-zapper",
  "thiserror",
@@ -2672,7 +2714,7 @@ checksum = "c55e02e35260070b6f716a2423c2ff1c3bb1642ddca6f99e1f26d06268a0e2d2"
 dependencies = [
  "bytes",
  "heck",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "log",
  "multimap",
  "once_cell",
@@ -2706,7 +2748,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "efb6c9a1dd1def8e2124d17e83a20af56f1570d6c2d2bd9e266ccb768df3840e"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "proc-macro2",
  "quote",
  "syn 2.0.52",
