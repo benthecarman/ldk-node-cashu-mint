@@ -114,6 +114,7 @@ async fn main() -> anyhow::Result<()> {
         loop {
             let ln_router = Router::new()
                 .route("/invoice", get(get_invoice))
+                .route("/channels", get(list_channels))
                 .layer(Extension(state.clone()));
             let listener = tokio::net::TcpListener::bind(listening_addr.clone())
                 .await
@@ -171,12 +172,11 @@ pub async fn list_channels(
             channel_id: channel.channel_id.to_string(),
             counterparty_node_id: channel.counterparty_node_id,
             channel_value_sats: channel.channel_value_sats,
-            outbound_capacity_sat: channel.outbound_capacity_msat * 1000,
-            inbound_capacity_sat: channel.inbound_capacity_msat * 1000,
+            outbound_capacity_sat: channel.outbound_capacity_msat / 1000,
+            inbound_capacity_sat: channel.inbound_capacity_msat / 1000,
             is_channel_ready: channel.is_channel_ready,
         })
         .collect();
 
-    let json = serde_json::to_string(&channels).unwrap();
-    Ok(Json(json!(json)))
+    Ok(Json(json!(channels)))
 }
